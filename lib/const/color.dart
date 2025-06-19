@@ -1,4 +1,4 @@
 import 'package:flutter/material.dart';
 
-Color custom_green = Color(0xff18DAA3);
-Color backgroundColor = Colors.grey.shade100;
+Color primaryColor = Color(0xff1A73E8); // Xanh dương cho giao diện sang trọng
+Color backgroundColor = Colors.grey.shade100; // Màu nền sáng
