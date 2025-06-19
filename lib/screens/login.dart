@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:task_remider_app/const/color.dart';
+import 'package:task_remider_app/data/auth_data.dart';
 
 class LogIN_Screen extends StatefulWidget {
-  const LogIN_Screen({super.key});
+  final VoidCallback show;
+  LogIN_Screen(this.show, {super.key});
 
   @override
   State<LogIN_Screen> createState() => _LogIN_ScreenState();
@@ -36,13 +38,13 @@ class _LogIN_ScreenState extends State<LogIN_Screen> {
             children: [
               SizedBox(height: 20),
               image(),
-              SizedBox(height: 50),
+              SizedBox(height: 40),
               textfield(email, _focusNode1, 'Email', Icons.email),
-              SizedBox(height: 10),
-              textfield(password, _focusNode2, 'Password', Icons.password),
-              SizedBox(height: 8),
+              SizedBox(height: 16),
+              textfield(password, _focusNode2, 'Password', Icons.lock),
+              SizedBox(height: 12),
               account(),
-              SizedBox(height: 20),
+              SizedBox(height: 30),
               Login_bottom(),
             ],
           ),
@@ -53,21 +55,24 @@ class _LogIN_ScreenState extends State<LogIN_Screen> {
 
   Widget account() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 15),
+      padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
           Text(
             "Don't have an account?",
-            style: TextStyle(color: Colors.grey[700], fontSize: 14),
+            style: TextStyle(color: Colors.grey[700], fontSize: 16),
           ),
           SizedBox(width: 5),
-          Text(
-            'Sign Up',
-            style: TextStyle(
-              color: Colors.blue,
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
+          GestureDetector(
+            onTap: widget.show,
+            child: Text(
+              'Sign Up',
+              style: TextStyle(
+                color: primaryColor,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
         ],
@@ -77,21 +82,33 @@ class _LogIN_ScreenState extends State<LogIN_Screen> {
 
   Widget Login_bottom() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 15),
-      child: Container(
-        alignment: Alignment.center,
-        width: double.infinity,
-        height: 50,
-        decoration: BoxDecoration(
-          color: custom_green,
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Text(
-          'Log In',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 23,
-            fontWeight: FontWeight.bold,
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: GestureDetector(
+        onTap: () {
+          AuthenticationRemote().login(email.text, password.text);
+        },
+        child: Container(
+          alignment: Alignment.center,
+          width: double.infinity,
+          height: 55,
+          decoration: BoxDecoration(
+            color: primaryColor,
+            borderRadius: BorderRadius.circular(15),
+            boxShadow: [
+              BoxShadow(
+                color: primaryColor.withOpacity(0.3),
+                blurRadius: 10,
+                spreadRadius: 3,
+              ),
+            ],
+          ),
+          child: Text(
+            'Log In',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ),
       ),
@@ -105,30 +122,38 @@ class _LogIN_ScreenState extends State<LogIN_Screen> {
     IconData icons,
   ) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 15),
+      padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Container(
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(15),
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 5,
+              spreadRadius: 2,
+            ),
+          ],
         ),
         child: TextField(
           controller: _controller,
           focusNode: _focusNode,
-          style: TextStyle(fontSize: 18, color: Colors.black),
+          style: TextStyle(fontSize: 16, color: Colors.black),
           decoration: InputDecoration(
             prefixIcon: Icon(
-              Icons.email,
-              color: _focusNode.hasFocus ? custom_green : Color(0xffc5c5c5),
+              icons,
+              color: _focusNode.hasFocus ? primaryColor : Color(0xffc5c5c5),
             ),
-            contentPadding: EdgeInsets.symmetric(horizontal: 15, vertical: 15),
-            hintText: 'typeName',
+            contentPadding: EdgeInsets.symmetric(horizontal: 15, vertical: 18),
+            hintText: typeName,
+            hintStyle: TextStyle(color: Colors.grey[600], fontSize: 16),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: BorderSide(color: Color(0xffc5c5c5), width: 2.0),
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: Color(0xffe0e0e0), width: 1.5),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: BorderSide(color: custom_green, width: 2.0),
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: primaryColor, width: 2.5),
             ),
           ),
         ),
@@ -138,15 +163,16 @@ class _LogIN_ScreenState extends State<LogIN_Screen> {
 
   Widget image() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 15),
+      padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Container(
         width: double.infinity,
-        height: 300,
+        height: 250,
         decoration: BoxDecoration(
           image: DecorationImage(
             image: AssetImage('images/1.jpg'),
             fit: BoxFit.cover,
           ),
+          borderRadius: BorderRadius.circular(20),
         ),
       ),
     );

@@ -3,12 +3,15 @@ plugins {
     id("kotlin-android")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
+    id("com.google.gms.google-services")
+    
 }
 
 android {
     namespace = "com.example.task_remider_app"
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
+    //ndkVersion = flutter.ndkVersion
+    ndkVersion = "27.0.12077973"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
@@ -24,7 +27,7 @@ android {
         applicationId = "com.example.task_remider_app"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
+        minSdk = 23
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
@@ -37,6 +40,22 @@ android {
             signingConfig = signingConfigs.getByName("debug")
         }
     }
+}
+
+
+dependencies {
+    // Firebase BoM (Bill of Materials) giúp quản lý phiên bản cho các thư viện Firebase
+    implementation(platform("com.google.firebase:firebase-bom:33.15.0"))
+
+    // Firebase Analytics (chỉ cần thêm các dịch vụ bạn sử dụng)
+    implementation("com.google.firebase:firebase-analytics")
+
+    // Thêm các Firebase services khác mà bạn sử dụng
+    // Ví dụ, nếu bạn sử dụng Firestore:
+    implementation("com.google.firebase:firebase-firestore")
+
+    // Nếu sử dụng Firebase Auth:
+    implementation("com.google.firebase:firebase-auth")
 }
 
 flutter {
