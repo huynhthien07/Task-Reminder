@@ -35,6 +35,8 @@ dependencies:
   firebase_core: ^2.32.0  # Cập nhật firebase_core lên phiên bản mới
   firebase_auth: ^4.11.0   # Đảm bảo firebase_auth là phiên bản phù hợp
   cloud_firestore: ^4.5.0  # Nếu bạn sử dụng Firebase Firestore
+  msh_checkbox: ^2.0.1
+  google_fonts: ^6.2.1
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
