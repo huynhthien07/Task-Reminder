@@ -31,6 +31,24 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
       ).showSnackBar(SnackBar(content: Text('Please fill all fields!')));
       return;
     }
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Confirm'),
+        content: Text('Are you sure you want to add this task?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text('Confirm'),
+          ),
+        ],
+      ),
+    );
+    if (confirm != true) return;
     await TaskService.addTask(
       context: context,
       title: _titleController.text,
@@ -38,6 +56,24 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
       priority: _selectedPriority,
       time: _selectedTime != null ? _selectedTime!.format(context) : '',
       date: _selectedDate,
+    );
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'Add task successfully!',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        duration: Duration(seconds: 3),
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: Colors.green,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        margin: EdgeInsets.symmetric(horizontal: 32, vertical: 24),
+        elevation: 8,
+      ),
     );
   }
 
