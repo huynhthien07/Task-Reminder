@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:task_remider_app/const/color.dart';
 
 class Task_Widget extends StatefulWidget {
-  const Task_Widget({super.key});
+  final Map<String, dynamic>? taskData;
+  const Task_Widget({Key? key, this.taskData}) : super(key: key);
 
   @override
   State<Task_Widget> createState() => _Task_WidgetState();
@@ -13,6 +14,18 @@ bool isDone = false;
 class _Task_WidgetState extends State<Task_Widget> {
   @override
   Widget build(BuildContext context) {
+    final data = widget.taskData;
+    final title = data?['title'] ?? 'Task Title';
+    final description =
+        data?['description'] ?? 'Task Subtitle or Description here';
+    final priority = data?['priority'] ?? 'High';
+    final date = data?['date'] ?? '';
+    final time = data?['time'] ?? '';
+    Color priorityColor = priority == 'High'
+        ? priorityHigh
+        : priority == 'Medium'
+        ? priorityMedium
+        : priorityLow;
     return Padding(
       padding: const EdgeInsets.symmetric(
         horizontal: 15,
@@ -53,7 +66,7 @@ class _Task_WidgetState extends State<Task_Widget> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          'Task Title',
+                          title,
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w600,
@@ -73,7 +86,7 @@ class _Task_WidgetState extends State<Task_Widget> {
                     ),
                     SizedBox(height: 5),
                     Text(
-                      'Task Subtitle or Description here',
+                      description,
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w400,
@@ -93,11 +106,11 @@ class _Task_WidgetState extends State<Task_Widget> {
                           ),
                         ),
                         Text(
-                          'High',
+                          priority,
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.bold,
-                            color: priorityHigh, // Red color for high priority
+                            color: priorityColor, // Red color for high priority
                           ),
                         ),
                       ],
@@ -107,7 +120,7 @@ class _Task_WidgetState extends State<Task_Widget> {
                       children: [
                         // Time button with smaller size
                         priorityButton(
-                          'Time',
+                          '$date $time',
                           Icons.access_time,
                           timeButtonColor,
                         ),
@@ -129,26 +142,31 @@ class _Task_WidgetState extends State<Task_Widget> {
 
   // Create button with icon
   Widget priorityButton(String label, IconData icon, Color color) {
+    final isEdit = label == 'Edit';
     return Container(
-      width: 80, // Slightly smaller width
-      height: 30, // Adjusted height for smaller buttons
+      constraints: BoxConstraints(maxWidth: isEdit ? 100 : 120),
+      height: 30,
       decoration: BoxDecoration(
         color: color,
         borderRadius: BorderRadius.circular(18),
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(icon, color: Colors.white, size: 16),
-            SizedBox(width: 8),
-            Text(
-              label,
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
+            SizedBox(width: 6),
+            Flexible(
+              child: Text(
+                label,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                ),
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
               ),
             ),
           ],
