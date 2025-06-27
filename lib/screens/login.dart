@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:task_remider_app/const/color.dart';
 import 'package:task_remider_app/data/auth_data.dart';
+import 'package:task_remider_app/screens/home.dart';
 
 class LogIN_Screen extends StatefulWidget {
   final VoidCallback show;
@@ -86,6 +87,10 @@ class _LogIN_ScreenState extends State<LogIN_Screen> {
       child: GestureDetector(
         onTap: () {
           AuthenticationRemote().login(email.text, password.text);
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => Home_Screen()),
+          );
         },
         child: Container(
           alignment: Alignment.center,
