@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:task_remider_app/const/color.dart';
+import 'package:task_remider_app/screens/edit_task.dart';
 
 class Task_Widget extends StatefulWidget {
   final Map<String, dynamic>? taskData;
@@ -26,114 +27,125 @@ class _Task_WidgetState extends State<Task_Widget> {
         : priority == 'Medium'
         ? priorityMedium
         : priorityLow;
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 15,
-        vertical: 8,
-      ), // Reduced vertical padding
-      child: Container(
-        width: double.infinity,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(
-            12,
-          ), // Slightly smaller border radius
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withOpacity(
-                0.1,
-              ), // Lighter shadow for a clean look
-              spreadRadius: 3,
-              blurRadius: 6,
-              offset: Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
-          child: Row(
-            children: [
-              // Task image as icon, smaller size
-              imageIcon(),
-              SizedBox(width: 15),
-              // Title and subtitle
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    SizedBox(height: 8),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          title,
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w600,
-                            fontFamily:
-                                'Poppins', // Font Poppins for modern look
-                          ),
-                        ),
-                        Checkbox(
-                          value: isDone,
-                          onChanged: (value) {
-                            setState(() {
-                              isDone = !isDone;
-                            });
-                          },
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 5),
-                    Text(
-                      description,
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w400,
-                        color: Colors.grey.shade600,
-                      ),
-                    ),
-                    SizedBox(height: 8),
-                    // Priority Level
-                    Row(
-                      children: [
-                        Text(
-                          'Priority: ',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            color: primaryColor,
-                          ),
-                        ),
-                        Text(
-                          priority,
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            color: priorityColor, // Red color for high priority
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 12),
-                    Row(
-                      children: [
-                        // Time button with smaller size
-                        priorityButton(
-                          '$date $time',
-                          Icons.access_time,
-                          timeButtonColor,
-                        ),
-                        SizedBox(width: 8),
-                        // Edit button with adjusted color
-                        priorityButton('Edit', Icons.edit, primaryColor),
-                      ],
-                    ),
-                    SizedBox(height: 10),
-                  ],
-                ),
+    return GestureDetector(
+      onTap: () {
+        if (data != null) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => EditTask(taskData: data)),
+          );
+        }
+      },
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: 15,
+          vertical: 8,
+        ), // Reduced vertical padding
+        child: Container(
+          width: double.infinity,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(
+              12,
+            ), // Slightly smaller border radius
+            color: Colors.white,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.grey.withOpacity(
+                  0.1,
+                ), // Lighter shadow for a clean look
+                spreadRadius: 3,
+                blurRadius: 6,
+                offset: Offset(0, 2),
               ),
             ],
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+            child: Row(
+              children: [
+                // Task image as icon, smaller size
+                imageIcon(),
+                SizedBox(width: 15),
+                // Title and subtitle
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SizedBox(height: 8),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            title,
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                              fontFamily:
+                                  'Poppins', // Font Poppins for modern look
+                            ),
+                          ),
+                          Checkbox(
+                            value: isDone,
+                            onChanged: (value) {
+                              setState(() {
+                                isDone = !isDone;
+                              });
+                            },
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 5),
+                      Text(
+                        description,
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w400,
+                          color: Colors.grey.shade600,
+                        ),
+                      ),
+                      SizedBox(height: 8),
+                      // Priority Level
+                      Row(
+                        children: [
+                          Text(
+                            'Priority: ',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: primaryColor,
+                            ),
+                          ),
+                          Text(
+                            priority,
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color:
+                                  priorityColor, // Red color for high priority
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 12),
+                      Row(
+                        children: [
+                          // Time button with smaller size
+                          priorityButton(
+                            '$date $time',
+                            Icons.access_time,
+                            timeButtonColor,
+                          ),
+                          SizedBox(width: 8),
+                          // Edit button with adjusted color
+                          priorityButton('Edit', Icons.edit, primaryColor),
+                        ],
+                      ),
+                      SizedBox(height: 10),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

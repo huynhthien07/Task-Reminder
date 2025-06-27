@@ -14,21 +14,10 @@ class Home_Screen extends StatefulWidget {
 
 class _Home_ScreenState extends State<Home_Screen> {
   final ScrollController _scrollController = ScrollController();
-  bool show = true;
-  double lastOffset = 0;
 
   @override
   void initState() {
     super.initState();
-    _scrollController.addListener(() {
-      if (_scrollController.position.userScrollDirection ==
-          ScrollDirection.reverse) {
-        if (show) setState(() => show = false);
-      } else if (_scrollController.position.userScrollDirection ==
-          ScrollDirection.forward) {
-        if (!show) setState(() => show = true);
-      }
-    });
   }
 
   @override
@@ -41,21 +30,16 @@ class _Home_ScreenState extends State<Home_Screen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: backgroundColor,
-      floatingActionButton: AnimatedSlide(
-        duration: Duration(milliseconds: 300),
-        offset: show ? Offset(0, 0) : Offset(0, 2),
-        curve: Curves.easeInOut,
-        child: FloatingActionButton(
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => AddTaskScreen()),
-            );
-          },
-          backgroundColor: Color(0xFF8687E7),
-          shape: const CircleBorder(),
-          child: Icon(Icons.add, color: Colors.white, size: 30),
-        ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => AddTaskScreen()),
+          );
+        },
+        backgroundColor: Color(0xFF8687E7),
+        shape: const CircleBorder(),
+        child: Icon(Icons.add, color: Colors.white, size: 30),
       ),
       body: SafeArea(
         child: Column(
@@ -80,7 +64,10 @@ class _Home_ScreenState extends State<Home_Screen> {
                     itemBuilder: (context, index) {
                       final doc = snapshot.data!.docs[index];
                       return Task_Widget(
-                        taskData: doc.data() as Map<String, dynamic>,
+                        taskData: {
+                          ...doc.data() as Map<String, dynamic>,
+                          'id': doc.id,
+                        },
                       );
                     },
                   );

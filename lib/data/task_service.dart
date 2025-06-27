@@ -28,4 +28,22 @@ class TaskService {
       );
     }
   }
+
+  static Future<void> updateTask({
+    required String id,
+    required String title,
+    required String description,
+    required String priority,
+    required String date,
+    required String time,
+  }) async {
+    await FirebaseFirestore.instance.collection('tasks').doc(id).update({
+      'title': title,
+      'description': description,
+    });
+  }
+
+  static Future<void> deleteTask({required String id}) async {
+    await FirebaseFirestore.instance.collection('tasks').doc(id).delete();
+  }
 }
