@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:task_remider_app/const/color.dart';
 import 'package:task_remider_app/data/auth_data.dart';
-import 'package:task_remider_app/screens/home.dart';
+import 'package:task_remider_app/services/notification_service.dart';
 
 class LogIN_Screen extends StatefulWidget {
   final VoidCallback show;
@@ -17,6 +17,8 @@ class _LogIN_ScreenState extends State<LogIN_Screen> {
 
   final email = TextEditingController();
   final password = TextEditingController();
+
+  bool isLoading = false;
 
   @override
   void initState() {
@@ -85,12 +87,37 @@ class _LogIN_ScreenState extends State<LogIN_Screen> {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: GestureDetector(
-        onTap: () {
-          AuthenticationRemote().login(email.text, password.text);
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => Home_Screen()),
-          );
+        onTap: () async {
+          setState(() {
+            isLoading = true;
+          });
+
+          try {
+            await AuthenticationRemote().login(email.text, password.text);
+
+            if (mounted) {
+              NotificationService().showAuthNotification(
+                context,
+                const AuthEventData(event: AuthEvent.loginSuccess),
+              );
+            }
+          } catch (e) {
+            if (mounted) {
+              NotificationService().showAuthNotification(
+                context,
+                AuthEventData(
+                  event: AuthEvent.loginFailure,
+                  errorCode: e.toString(),
+                ),
+              );
+            }
+          } finally {
+            if (mounted) {
+              setState(() {
+                isLoading = false;
+              });
+            }
+          }
         },
         child: Container(
           alignment: Alignment.center,
@@ -107,14 +134,16 @@ class _LogIN_ScreenState extends State<LogIN_Screen> {
               ),
             ],
           ),
-          child: Text(
-            'Log In',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 20,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
+          child: isLoading
+              ? CircularProgressIndicator(color: Colors.white)
+              : Text(
+                  'Log In',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
         ),
       ),
     );
