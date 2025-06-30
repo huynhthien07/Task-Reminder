@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import '../const/color.dart';
 import '../data/task_service.dart';
+import '../models/task_model.dart';
+// import '../services/notification_service.dart';
+import '../services/user_service.dart';
 
 class EditTask extends StatefulWidget {
   final Map<String, dynamic> taskData;
@@ -17,6 +20,9 @@ class _EditTaskState extends State<EditTask> {
   late String _selectedTime;
   late String _selectedDate;
   bool _isEditing = false;
+  final TaskService _taskService = TaskService();
+  final UserService _userService = UserService();
+  bool _isLoading = false;
 
   @override
   void initState() {
@@ -47,75 +53,98 @@ class _EditTaskState extends State<EditTask> {
       );
       return;
     }
+    setState(() {
+      _isLoading = true;
+    });
+
     try {
-      await TaskService.updateTask(
+      // Get current user
+      final currentUser = _userService.currentUser;
+      if (currentUser == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('You must be logged in to edit tasks'),
+            ),
+          );
+        }
+        return;
+      }
+
+      // Create updated TaskModel
+      final updatedTask = TaskModel(
         id: id,
         title: _titleController.text,
         description: _descController.text,
-        priority: (widget.taskData['priority'] ?? '').toString(),
-        date: (widget.taskData['date'] ?? '').toString(),
-        time: (widget.taskData['time'] ?? '').toString(),
+        priority: _selectedPriority,
+        date: _selectedDate,
+        time: _selectedTime,
+        isCompleted: widget.taskData['isCompleted'] ?? false,
+        userId:
+            widget.taskData['userId'] ??
+            currentUser.uid, // Preserve original userId or use current user
       );
+
+      final result = await _taskService.updateTask(updatedTask);
+
       if (mounted) {
-        Navigator.of(context).pop();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Task updated successfully!',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            duration: Duration(seconds: 3),
-            behavior: SnackBarBehavior.floating,
-            backgroundColor: Colors.green,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            margin: EdgeInsets.symmetric(horizontal: 32, vertical: 24),
-            elevation: 8,
-          ),
-        );
+        setState(() {
+          _isLoading = false;
+        });
+
+        // NotificationService().showTaskNotification(context, result);
+
+        if (result.event == TaskEvent.taskUpdated) {
+          Navigator.of(context).pop();
+        }
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to update task: \\${e.toString()}')),
-      );
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to update task: ${e.toString()}')),
+        );
+      }
     }
   }
 
   Future<void> _deleteTaskFromApi() async {
+    setState(() {
+      _isLoading = true;
+    });
+
     try {
-      await TaskService.deleteTask(id: widget.taskData['id']);
+      final taskId = widget.taskData['id']?.toString();
+      if (taskId == null) {
+        throw Exception('Task ID is missing');
+      }
+
+      final result = await _taskService.deleteTask(taskId);
+
       if (mounted) {
-        Navigator.of(context).pop();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Task deleted successfully!',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            duration: Duration(seconds: 3),
-            behavior: SnackBarBehavior.floating,
-            backgroundColor: Colors.green,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            margin: EdgeInsets.symmetric(horizontal: 32, vertical: 24),
-            elevation: 8,
-          ),
-        );
+        setState(() {
+          _isLoading = false;
+        });
+
+        // NotificationService().showTaskNotification(context, result);
+
+        if (result.event == TaskEvent.taskDeleted) {
+          Navigator.of(context).pop();
+        }
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to delete task: \\${e.toString()}')),
-      );
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to delete task: ${e.toString()}')),
+        );
+      }
     }
   }
 
@@ -125,6 +154,57 @@ class _EditTaskState extends State<EditTask> {
 
   void _deleteTask() {
     _deleteTaskFromApi();
+  }
+
+  Future<void> _selectDate() async {
+    if (!_isEditing) return;
+
+    _logEvent('Date picker opened');
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime.now(),
+      lastDate: DateTime(2030),
+    );
+
+    if (picked != null) {
+      final formattedDate =
+          '${picked.day.toString().padLeft(2, '0')}/${picked.month.toString().padLeft(2, '0')}/${picked.year}';
+      _onDateChanged(formattedDate);
+    }
+  }
+
+  Future<void> _selectTime() async {
+    if (!_isEditing) return;
+
+    _logEvent('Time picker opened');
+    final TimeOfDay? picked = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.now(),
+    );
+
+    if (picked != null && mounted) {
+      final formattedTime = picked.format(context);
+      _onTimeChanged(formattedTime);
+    }
+  }
+
+  void _onDateChanged(String date) {
+    setState(() {
+      _selectedDate = date;
+    });
+    _logEvent('Date changed to: $date');
+  }
+
+  void _onTimeChanged(String time) {
+    setState(() {
+      _selectedTime = time;
+    });
+    _logEvent('Time changed to: $time');
+  }
+
+  void _logEvent(String event) {
+    debugPrint('[EditTask Event] $event at ${DateTime.now()}');
   }
 
   void _showEditDialog() async {
@@ -458,28 +538,100 @@ class _EditTaskState extends State<EditTask> {
                 left: 220,
                 right: 25,
                 top: 235,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
-                  ),
-                  decoration: ShapeDecoration(
-                    color: const Color(0xFFBBD5F3),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(6),
+                child: Row(
+                  children: [
+                    // Date picker
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: _selectDate,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 8,
+                          ),
+                          decoration: ShapeDecoration(
+                            color: _isEditing
+                                ? const Color(0xFFBBD5F3)
+                                : Colors.grey[300],
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.calendar_today,
+                                size: 14,
+                                color: Colors.black87,
+                              ),
+                              SizedBox(width: 4),
+                              Flexible(
+                                child: Text(
+                                  _selectedDate.isEmpty
+                                      ? 'Date'
+                                      : _selectedDate,
+                                  style: TextStyle(
+                                    color: Colors.black87,
+                                    fontSize: 10,
+                                    fontFamily: 'Lato',
+                                    fontWeight: FontWeight.w400,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
                     ),
-                  ),
-                  child: Text(
-                    '${_selectedDate} ${_selectedTime}',
-                    style: TextStyle(
-                      color: Colors.black87,
-                      fontSize: 12,
-                      fontFamily: 'Lato',
-                      fontWeight: FontWeight.w400,
-                      height: 1.75,
-                      letterSpacing: -0.32,
+                    SizedBox(width: 4),
+                    // Time picker
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: _selectTime,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 8,
+                          ),
+                          decoration: ShapeDecoration(
+                            color: _isEditing
+                                ? const Color(0xFFBBD5F3)
+                                : Colors.grey[300],
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.access_time,
+                                size: 14,
+                                color: Colors.black87,
+                              ),
+                              SizedBox(width: 4),
+                              Flexible(
+                                child: Text(
+                                  _selectedTime.isEmpty
+                                      ? 'Time'
+                                      : _selectedTime,
+                                  style: TextStyle(
+                                    color: Colors.black87,
+                                    fontSize: 10,
+                                    fontFamily: 'Lato',
+                                    fontWeight: FontWeight.w400,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
                     ),
-                  ),
+                  ],
                 ),
               ),
               // Task Priority

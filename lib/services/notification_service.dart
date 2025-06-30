@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:task_remider_app/data/task_service.dart';
 
 /// Event types for authentication notifications
 enum AuthEvent { loginSuccess, loginFailure, signupSuccess, signupFailure }
@@ -33,6 +34,64 @@ class NotificationService {
         margin: const EdgeInsets.all(16),
       ),
     );
+  }
+
+  /// Show notification for task operations
+  void showTaskNotification(BuildContext context, TaskEventData eventData) {
+    final (message, color, duration) = _getTaskNotificationDetails(eventData);
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: color,
+        duration: duration,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        margin: const EdgeInsets.all(16),
+      ),
+    );
+  }
+
+  /// Get notification details for task operations
+  (String message, Color color, Duration duration) _getTaskNotificationDetails(
+    TaskEventData eventData,
+  ) {
+    switch (eventData.event) {
+      case TaskEvent.taskAdded:
+        return (
+          eventData.message ?? 'Task added!',
+          Colors.green,
+          const Duration(seconds: 2),
+        );
+
+      case TaskEvent.taskUpdated:
+        return (
+          eventData.message ?? 'Task updated!',
+          Colors.blue,
+          const Duration(seconds: 2),
+        );
+
+      case TaskEvent.taskDeleted:
+        return (
+          eventData.message ?? 'Task deleted!',
+          Colors.orange,
+          const Duration(seconds: 2),
+        );
+
+      case TaskEvent.taskCompleted:
+        return (
+          eventData.message ?? 'Task status updated!',
+          Colors.green,
+          const Duration(seconds: 2),
+        );
+
+      case TaskEvent.taskError:
+        return (
+          eventData.message ?? 'Task operation failed',
+          Colors.red,
+          const Duration(seconds: 3),
+        );
+    }
   }
 
   /// Get notification details based on event type and error code

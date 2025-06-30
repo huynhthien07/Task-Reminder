@@ -1,41 +1,106 @@
 import 'package:flutter/material.dart';
 import 'package:task_remider_app/const/color.dart';
 import 'package:task_remider_app/screens/edit_task.dart';
+import 'package:task_remider_app/models/task_model.dart';
+
+/// Data class for clean task display
+class TaskDisplayData {
+  final String title;
+  final String description;
+  final String priority;
+  final String date;
+  final String time;
+  final bool isCompleted;
+  final String id;
+
+  const TaskDisplayData({
+    required this.title,
+    required this.description,
+    required this.priority,
+    required this.date,
+    required this.time,
+    required this.isCompleted,
+    required this.id,
+  });
+}
 
 class Task_Widget extends StatefulWidget {
-  final Map<String, dynamic>? taskData;
-  const Task_Widget({Key? key, this.taskData}) : super(key: key);
+  final TaskModel? task;
+  final Map<String, dynamic>? taskData; // Keep for backward compatibility
+  final VoidCallback? onToggleComplete;
+
+  const Task_Widget({Key? key, this.task, this.taskData, this.onToggleComplete})
+    : super(key: key);
 
   @override
   State<Task_Widget> createState() => _Task_WidgetState();
 }
 
-bool isDone = false;
-
 class _Task_WidgetState extends State<Task_Widget> {
+  // Extract task data with clean code principles
+  TaskDisplayData get _taskData {
+    final task = widget.task;
+    final data = widget.taskData;
+
+    return TaskDisplayData(
+      title: task?.title ?? data?['title'] ?? 'Task Title',
+      description:
+          task?.description ??
+          data?['description'] ??
+          'Task Subtitle or Description here',
+      priority: task?.priority ?? data?['priority'] ?? 'High',
+      date: task?.date ?? data?['date'] ?? '',
+      time: task?.time ?? data?['time'] ?? '',
+      isCompleted: task?.isCompleted ?? data?['isCompleted'] ?? false,
+      id: task?.id ?? data?['id'] ?? '',
+    );
+  }
+
+  Color _getPriorityColor(String priority) {
+    switch (priority.toLowerCase()) {
+      case 'high':
+        return priorityHigh;
+      case 'medium':
+        return priorityMedium;
+      case 'low':
+        return priorityLow;
+      default:
+        return priorityHigh;
+    }
+  }
+
+  void _onTaskTap() {
+    final taskData = _taskData;
+    final taskDataForEdit = {
+      'id': taskData.id,
+      'title': taskData.title,
+      'description': taskData.description,
+      'priority': taskData.priority,
+      'date': taskData.date,
+      'time': taskData.time,
+      'isCompleted': taskData.isCompleted,
+    };
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => EditTask(taskData: taskDataForEdit),
+      ),
+    );
+  }
+
+  void _onCheckboxChanged() {
+    if (widget.onToggleComplete != null) {
+      widget.onToggleComplete!();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final data = widget.taskData;
-    final title = data?['title'] ?? 'Task Title';
-    final description =
-        data?['description'] ?? 'Task Subtitle or Description here';
-    final priority = data?['priority'] ?? 'High';
-    final date = data?['date'] ?? '';
-    final time = data?['time'] ?? '';
-    Color priorityColor = priority == 'High'
-        ? priorityHigh
-        : priority == 'Medium'
-        ? priorityMedium
-        : priorityLow;
+    final taskData = _taskData;
+    final priorityColor = _getPriorityColor(taskData.priority);
     return GestureDetector(
-      onTap: () {
-        if (data != null) {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => EditTask(taskData: data)),
-          );
-        }
-      },
+      onTap: _onTaskTap,
       child: Padding(
         padding: const EdgeInsets.symmetric(
           horizontal: 15,
@@ -76,7 +141,7 @@ class _Task_WidgetState extends State<Task_Widget> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            title,
+                            taskData.title,
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.w600,
@@ -85,18 +150,15 @@ class _Task_WidgetState extends State<Task_Widget> {
                             ),
                           ),
                           Checkbox(
-                            value: isDone,
-                            onChanged: (value) {
-                              setState(() {
-                                isDone = !isDone;
-                              });
-                            },
+                            value: taskData.isCompleted,
+                            onChanged: (value) => _onCheckboxChanged(),
+                            activeColor: primaryColor,
                           ),
                         ],
                       ),
                       SizedBox(height: 5),
                       Text(
-                        description,
+                        taskData.description,
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w400,
@@ -116,7 +178,7 @@ class _Task_WidgetState extends State<Task_Widget> {
                             ),
                           ),
                           Text(
-                            priority,
+                            taskData.priority,
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.bold,
@@ -129,14 +191,14 @@ class _Task_WidgetState extends State<Task_Widget> {
                       SizedBox(height: 12),
                       Row(
                         children: [
-                          // Time button with smaller size
+                          // Time button with flexible width
                           priorityButton(
-                            '$date $time',
+                            '${taskData.date} ${taskData.time}',
                             Icons.access_time,
                             timeButtonColor,
                           ),
                           SizedBox(width: 8),
-                          // Edit button with adjusted color
+                          // Edit button with fixed width
                           priorityButton('Edit', Icons.edit, primaryColor),
                         ],
                       ),
@@ -154,34 +216,35 @@ class _Task_WidgetState extends State<Task_Widget> {
 
   // Create button with icon
   Widget priorityButton(String label, IconData icon, Color color) {
-    final isEdit = label == 'Edit';
-    return Container(
-      constraints: BoxConstraints(maxWidth: isEdit ? 100 : 120),
-      height: 30,
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(18),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, color: Colors.white, size: 16),
-            SizedBox(width: 6),
-            Flexible(
-              child: Text(
-                label,
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 13,
-                  fontWeight: FontWeight.bold,
+    return Flexible(
+      child: Container(
+        height: 30,
+        decoration: BoxDecoration(
+          color: color,
+          borderRadius: BorderRadius.circular(18),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, color: Colors.white, size: 16),
+              SizedBox(width: 4),
+              Flexible(
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
                 ),
-                overflow: TextOverflow.ellipsis,
-                maxLines: 1,
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -193,7 +256,9 @@ class _Task_WidgetState extends State<Task_Widget> {
       height: 110, // Reduced height
       width: 85, // Adjusted width
       decoration: BoxDecoration(
-        color: primaryColor.withOpacity(0.1), // Light background for the icon
+        color: primaryColor.withValues(
+          alpha: 0.1,
+        ), // Light background for the icon
         borderRadius: BorderRadius.circular(10),
       ),
       child: Center(

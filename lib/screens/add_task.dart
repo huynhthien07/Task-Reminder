@@ -1,7 +1,9 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import '../const/color.dart';
 import '../data/task_service.dart';
+import '../models/task_model.dart';
+// import '../services/notification_service.dart';
+import '../services/user_service.dart';
 
 class AddTaskScreen extends StatefulWidget {
   const AddTaskScreen({super.key});
@@ -16,6 +18,10 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
   DateTime? _selectedDate;
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _descController = TextEditingController();
+  final TaskService _taskService = TaskService();
+  final UserService _userService = UserService();
+  bool _isLoading = false;
+
   final Map<String, Color> _priorityColors = {
     'High': Color(0xffFF5722),
     'Medium': Color(0xffFF9800),
@@ -49,32 +55,52 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
       ),
     );
     if (confirm != true) return;
-    await TaskService.addTask(
-      context: context,
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    // Create TaskModel
+    final currentUser = _userService.currentUser;
+    if (currentUser == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('You must be logged in to add tasks')),
+        );
+      }
+      return;
+    }
+
+    // Format time before async operations to avoid BuildContext issues
+    final formattedTime = _selectedTime != null
+        ? _selectedTime!.format(context)
+        : '';
+
+    final task = TaskModel(
       title: _titleController.text,
       description: _descController.text,
       priority: _selectedPriority,
-      time: _selectedTime != null ? _selectedTime!.format(context) : '',
-      date: _selectedDate,
+      time: formattedTime,
+      date: _selectedDate != null
+          ? '${_selectedDate!.day.toString().padLeft(2, '0')}/${_selectedDate!.month.toString().padLeft(2, '0')}/${_selectedDate!.year}'
+          : '',
+      createdAt: DateTime.now(),
+      userId: currentUser.uid, // This will be ensured by TaskService as well
     );
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          'Add task successfully!',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        duration: Duration(seconds: 3),
-        behavior: SnackBarBehavior.floating,
-        backgroundColor: Colors.green,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        margin: EdgeInsets.symmetric(horizontal: 32, vertical: 24),
-        elevation: 8,
-      ),
-    );
+
+    final result = await _taskService.addTask(task);
+
+    if (mounted) {
+      setState(() {
+        _isLoading = false;
+      });
+
+      // NotificationService().showTaskNotification(context, result);
+
+      if (result.event == TaskEvent.taskAdded) {
+        Navigator.of(context).pop();
+      }
+    }
   }
 
   Future<void> _pickDateTime() async {
@@ -182,15 +208,15 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
                 ),
               ),
               Positioned(
-                left: 220,
-                right: 25,
+                left: 160,
+                right: 5,
                 top: 235,
                 child: GestureDetector(
                   onTap: _pickDateTime,
                   child: Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 8,
+                      horizontal: 12,
+                      vertical: 10,
                     ),
                     decoration: ShapeDecoration(
                       color: const Color(0xFFBBD5F3),
@@ -198,26 +224,23 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
                         borderRadius: BorderRadius.circular(6),
                       ),
                     ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Text(
-                          _selectedDate != null && _selectedTime != null
-                              ? '${_selectedDate!.day.toString().padLeft(2, '0')}/${_selectedDate!.month.toString().padLeft(2, '0')}/${_selectedDate!.year}  ' +
-                                    _selectedTime!.format(context)
-                              : 'DD/MM/YY 00:00',
-                          style: TextStyle(
-                            color: Colors.black87,
-                            fontSize: 12,
-                            fontFamily: 'Lato',
-                            fontWeight: FontWeight.w400,
-                            height: 1.75,
-                            letterSpacing: -0.32,
-                          ),
+                    child: Center(
+                      child: Text(
+                        _selectedDate != null && _selectedTime != null
+                            ? '${_selectedDate!.day.toString().padLeft(2, '0')}/${_selectedDate!.month.toString().padLeft(2, '0')}/${_selectedDate!.year.toString().substring(2)} ${_selectedTime!.format(context)}'
+                            : 'Select Date & Time',
+                        style: const TextStyle(
+                          color: Colors.black87,
+                          fontSize: 13,
+                          fontFamily: 'Lato',
+                          fontWeight: FontWeight.w500,
+                          height: 1.4,
+                          letterSpacing: -0.2,
                         ),
-                      ],
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
+                        textAlign: TextAlign.center,
+                      ),
                     ),
                   ),
                 ),
