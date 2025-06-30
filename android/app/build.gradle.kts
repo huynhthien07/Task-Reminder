@@ -60,6 +60,7 @@ dependencies {
 
     // Nếu sử dụng Firebase Auth:
     implementation("com.google.firebase:firebase-auth")
+    implementation("com.google.firebase:firebase-messaging")
 }
 
 flutter {

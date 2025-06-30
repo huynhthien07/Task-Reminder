@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+
 import '../const/color.dart';
 import '../data/task_service.dart';
 import '../models/task_model.dart';
-// import '../services/notification_service.dart';
+import '../services/notification_service.dart';
 import '../services/user_service.dart';
 
 class AddTaskScreen extends StatefulWidget {
@@ -95,7 +96,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
         _isLoading = false;
       });
 
-      // NotificationService().showTaskNotification(context, result);
+      NotificationService().showTaskNotification(context, result);
 
       if (result.event == TaskEvent.taskAdded) {
         Navigator.of(context).pop();

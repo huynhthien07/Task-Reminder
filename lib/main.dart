@@ -1,15 +1,15 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:task_remider_app/auth/main_page.dart';
-// import 'package:task_remider_app/services/firebase_notification_service.dart';
+import 'package:task_remider_app/services/firebase_notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
 
   // Initialize Firebase notification service
-  // final firebaseNotificationService = FirebaseNotificationService();
-  // await firebaseNotificationService.initialize();
+  final firebaseNotificationService = FirebaseNotificationService();
+  await firebaseNotificationService.initialize();
 
   runApp(const MyApp());
 }
