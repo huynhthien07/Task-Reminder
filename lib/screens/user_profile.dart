@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:task_remider_app/const/color.dart';
+import 'package:task_remider_app/screens/simple_notification_settings.dart';
 import 'package:task_remider_app/services/user_service.dart';
-// import 'package:task_remider_app/services/notification_service.dart';
-// import 'package:task_remider_app/screens/simple_notification_settings.dart';
 
 class UserProfileScreen extends StatefulWidget {
   const UserProfileScreen({Key? key}) : super(key: key);
@@ -196,22 +195,46 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
         border: Border.all(color: Colors.grey[200]!),
       ),
       child: Column(
-        // children: [
-        //   _buildSettingsTile(
-        //     icon: Icons.notifications_outlined,
-        //     title: 'Notifications',
-        //     subtitle: 'Manage your notification preferences',
-        //     onTap: () {
-        //       Navigator.push(
-        //         context,
-        //         MaterialPageRoute(
-        //           builder: (context) =>
-        //               const SimpleNotificationSettingsScreen(),
-        //         ),
-        //       );
-        //     },
-        //   ),
-        // ],
+        children: [
+          _buildSettingsTile(
+            icon: Icons.notifications_outlined,
+            title: 'Notifications',
+            subtitle: 'Manage your notification preferences',
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) =>
+                      const SimpleNotificationSettingsScreen(),
+                ),
+              );
+            },
+          ),
+          // Divider(height: 1, color: Colors.grey[300]),
+          // _buildSettingsTile(
+          //   icon: Icons.security_outlined,
+          //   title: 'Privacy & Security',
+          //   subtitle: 'Manage your privacy settings',
+          //   onTap: () {
+          //     // TODO: Implement privacy settings
+          //     ScaffoldMessenger.of(context).showSnackBar(
+          //       const SnackBar(content: Text('Privacy settings coming soon!')),
+          //     );
+          //   },
+          // ),
+          // Divider(height: 1, color: Colors.grey[300]),
+          // _buildSettingsTile(
+          //   icon: Icons.help_outline,
+          //   title: 'Help & Support',
+          //   subtitle: 'Get help and contact support',
+          //   onTap: () {
+          //     // TODO: Implement help & support
+          //     ScaffoldMessenger.of(context).showSnackBar(
+          //       const SnackBar(content: Text('Help & Support coming soon!')),
+          //     );
+          //   },
+          // ),
+        ],
       ),
     );
   }
