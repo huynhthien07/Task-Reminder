@@ -1,6 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:task_remider_app/models/task_model.dart';
-import 'package:task_remider_app/services/firebase_notification_service.dart';
 import 'package:task_remider_app/services/user_service.dart';
 
 /// Event types for task operations
@@ -29,8 +28,6 @@ class TaskService {
 
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final UserService _userService = UserService();
-  final FirebaseNotificationService _notificationService =
-      FirebaseNotificationService();
   static const String _collection = 'tasks';
 
   /// Add a new task
@@ -51,9 +48,6 @@ class TaskService {
           .collection(_collection)
           .add(taskWithUserId.toFirestore());
       final newTask = taskWithUserId.copyWith(id: docRef.id);
-
-      // Schedule Firebase notification for the new task
-      await _notificationService.scheduleTaskNotification(newTask);
 
       return TaskEventData(
         event: TaskEvent.taskAdded,
@@ -115,10 +109,6 @@ class TaskService {
           .doc(task.id)
           .update(taskWithUserId.toFirestore());
 
-      // Cancel old notifications and schedule new ones for the updated task
-      await _notificationService.cancelTaskNotification(task.id!);
-      await _notificationService.scheduleTaskNotification(taskWithUserId);
-
       return TaskEventData(
         event: TaskEvent.taskUpdated,
         task: taskWithUserId,
@@ -165,9 +155,6 @@ class TaskService {
       }
 
       await _firestore.collection(_collection).doc(taskId).delete();
-
-      // Cancel notification for the deleted task
-      await _notificationService.cancelTaskNotification(taskId);
 
       return TaskEventData(
         event: TaskEvent.taskDeleted,

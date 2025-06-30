@@ -1,13 +1,12 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:task_remider_app/const/color.dart';
-import 'package:task_remider_app/data/task_service.dart';
-import 'package:task_remider_app/screens/add_task.dart';
-import 'package:task_remider_app/screens/simple_notification_settings.dart';
-import 'package:task_remider_app/screens/user_profile.dart';
-import 'package:task_remider_app/services/firebase_notification_service.dart';
-import 'package:task_remider_app/services/user_service.dart';
 import 'package:task_remider_app/widgets/task_widgets.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:task_remider_app/screens/add_task.dart';
+import 'package:task_remider_app/screens/user_profile.dart';
+import 'package:task_remider_app/services/user_service.dart';
+import 'package:task_remider_app/data/task_service.dart';
 
 class Home_Screen extends StatefulWidget {
   const Home_Screen({super.key});
@@ -20,8 +19,6 @@ class _Home_ScreenState extends State<Home_Screen> {
   final ScrollController _scrollController = ScrollController();
   final UserService _userService = UserService();
   final TaskService _taskService = TaskService();
-  final FirebaseNotificationService _notificationService =
-      FirebaseNotificationService();
   String _selectedCategory = 'All Tasks';
   String _selectedPriorityFilter = 'All Priorities';
 
@@ -59,7 +56,6 @@ class _Home_ScreenState extends State<Home_Screen> {
   @override
   void dispose() {
     _scrollController.dispose();
-    _notificationService.clearGlobalContext();
     super.dispose();
   }
 
@@ -222,9 +218,6 @@ class _Home_ScreenState extends State<Home_Screen> {
 
   @override
   Widget build(BuildContext context) {
-    // Set global context for notifications
-    _notificationService.setGlobalContext(context);
-
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: AppBar(
@@ -239,24 +232,6 @@ class _Home_ScreenState extends State<Home_Screen> {
           ),
         ),
         actions: [
-          // Notification Settings Button
-          IconButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) =>
-                      const SimpleNotificationSettingsScreen(),
-                ),
-              );
-            },
-            icon: const Icon(
-              Icons.notifications_outlined,
-              color: Colors.black87,
-              size: 24,
-            ),
-          ),
-          // User Profile Button
           GestureDetector(
             onTap: () {
               Navigator.push(

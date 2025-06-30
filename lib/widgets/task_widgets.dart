@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:task_remider_app/const/color.dart';
-import 'package:task_remider_app/models/task_model.dart';
 import 'package:task_remider_app/screens/edit_task.dart';
+import 'package:task_remider_app/models/task_model.dart';
 
 /// Data class for clean task display
 class TaskDisplayData {
@@ -199,12 +199,7 @@ class _Task_WidgetState extends State<Task_Widget> {
                           ),
                           SizedBox(width: 8),
                           // Edit button with fixed width
-                          Flexible(
-                            child: GestureDetector(
-                              onTap: _onTaskTap,
-                              child: _buildEditButton(),
-                            ),
-                          ),
+                          priorityButton('Edit', Icons.edit, primaryColor),
                         ],
                       ),
                       SizedBox(height: 10),
@@ -250,40 +245,6 @@ class _Task_WidgetState extends State<Task_Widget> {
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-
-  // Build edit button
-  Widget _buildEditButton() {
-    return Container(
-      height: 30,
-      decoration: BoxDecoration(
-        color: primaryColor,
-        borderRadius: BorderRadius.circular(18),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.edit, color: Colors.white, size: 16),
-            SizedBox(width: 4),
-            Flexible(
-              child: Text(
-                'Edit',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                ),
-                overflow: TextOverflow.ellipsis,
-                maxLines: 1,
-              ),
-            ),
-          ],
         ),
       ),
     );
