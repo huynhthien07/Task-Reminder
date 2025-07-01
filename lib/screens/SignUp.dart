@@ -214,10 +214,12 @@ class _SignUp_ScreenState extends State<SignUp_Screen> {
   FocusNode _focusNode1 = FocusNode();
   FocusNode _focusNode2 = FocusNode();
   FocusNode _focusNode3 = FocusNode();
+  FocusNode _focusNodeFullName = FocusNode();
 
   final email = TextEditingController();
   final password = TextEditingController();
   final passwordConfirm = TextEditingController();
+  final fullName = TextEditingController();
 
   bool isLoading = false;
 
@@ -227,6 +229,7 @@ class _SignUp_ScreenState extends State<SignUp_Screen> {
     _focusNode1.addListener(() => setState(() {}));
     _focusNode2.addListener(() => setState(() {}));
     _focusNode3.addListener(() => setState(() {}));
+    _focusNodeFullName.addListener(() => setState(() {}));
   }
 
   @override
@@ -240,6 +243,13 @@ class _SignUp_ScreenState extends State<SignUp_Screen> {
               SizedBox(height: 20),
               image(),
               SizedBox(height: 50),
+              textfield(
+                fullName,
+                _focusNodeFullName,
+                'Full name',
+                Icons.person,
+              ),
+              SizedBox(height: 16),
               textfield(email, _focusNode1, 'Email', Icons.email),
               SizedBox(height: 16),
               textfield(password, _focusNode2, 'Password', Icons.lock),
@@ -302,6 +312,7 @@ class _SignUp_ScreenState extends State<SignUp_Screen> {
               email.text,
               password.text,
               passwordConfirm.text,
+              fullName: fullName.text,
             );
 
             if (mounted) {
