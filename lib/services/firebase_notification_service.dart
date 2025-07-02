@@ -53,6 +53,9 @@ class FirebaseNotificationService {
   int _notificationTimingMinutes = 15;
   BuildContext? _globalContext;
 
+  // Track scheduled timers for cancellation
+  final Map<String, Timer> _scheduledTimers = {};
+
   // Settings keys
   static const String _soundEnabledKey = 'fcm_sound_enabled';
   static const String _notificationsEnabledKey = 'fcm_notifications_enabled';
@@ -204,10 +207,36 @@ class FirebaseNotificationService {
     }
 
     try {
+      // Calculate actual remaining time from now to task deadline
+      final actualMinutesRemaining = _calculateRemainingMinutes(task);
+
+      // Create appropriate message based on actual time remaining
+      String messageBody;
+      if (actualMinutesRemaining > 0) {
+        if (actualMinutesRemaining >= 60) {
+          final hours = actualMinutesRemaining ~/ 60;
+          final minutes = actualMinutesRemaining % 60;
+          if (minutes > 0) {
+            messageBody = '${task.title} is due in ${hours}h ${minutes}m';
+          } else {
+            messageBody =
+                '${task.title} is due in ${hours} hour${hours > 1 ? 's' : ''}';
+          }
+        } else {
+          messageBody =
+              '${task.title} is due in $actualMinutesRemaining minute${actualMinutesRemaining > 1 ? 's' : ''}';
+        }
+      } else if (actualMinutesRemaining == 0) {
+        messageBody = '${task.title} is due now!';
+      } else {
+        messageBody =
+            '${task.title} was due ${actualMinutesRemaining.abs()} minute${actualMinutesRemaining.abs() > 1 ? 's' : ''} ago';
+      }
+
       // Create a local notification that appears in device notification panel
       await _sendLocalNotification(
         title: '📋 Task Reminder',
-        body: '${task.title} is due in $minutesBefore minutes',
+        body: messageBody,
         data: {
           'taskId': task.id ?? '',
           'title': task.title,
@@ -216,6 +245,7 @@ class FirebaseNotificationService {
           'time': task.time,
           'priority': task.priority,
           'type': 'task_reminder',
+          'minutesRemaining': actualMinutesRemaining.toString(),
         },
       );
 
@@ -228,6 +258,48 @@ class FirebaseNotificationService {
         '[FirebaseNotificationService] Error sending task reminder: $e',
       );
       return false;
+    }
+  }
+
+  /// Calculate remaining minutes from now to task deadline
+  int _calculateRemainingMinutes(TaskModel task) {
+    try {
+      // Parse date: "02/07/2025" -> day/month/year
+      final dateParts = task.date.split('/');
+      if (dateParts.length != 3) return 0;
+
+      final day = int.parse(dateParts[0]);
+      final month = int.parse(dateParts[1]);
+      final year = int.parse(dateParts[2]);
+
+      // Parse time: "14:30" or "2:30 PM"
+      final timeParts = task.time.contains(':') ? task.time.split(':') : [];
+      if (timeParts.length < 2) return 0;
+
+      int hour = int.parse(timeParts[0]);
+      int minute = int.parse(
+        timeParts[1].split(' ')[0],
+      ); // Remove AM/PM if exists
+
+      // Handle AM/PM format
+      if (task.time.toUpperCase().contains('PM') && hour != 12) {
+        hour += 12;
+      } else if (task.time.toUpperCase().contains('AM') && hour == 12) {
+        hour = 0;
+      }
+
+      // Create DateTime for task deadline
+      final taskDateTime = DateTime(year, month, day, hour, minute);
+      final now = DateTime.now();
+
+      // Calculate difference
+      final difference = taskDateTime.difference(now);
+      return difference.inMinutes;
+    } catch (e) {
+      debugPrint(
+        '[FirebaseNotificationService] Error calculating remaining minutes: $e',
+      );
+      return 0;
     }
   }
 
@@ -400,20 +472,113 @@ class FirebaseNotificationService {
     int? minutesBefore,
   }) async {
     final timing = minutesBefore ?? _notificationTimingMinutes;
-    return await sendTaskReminder(task, minutesBefore: timing);
+
+    // Calculate when to send the notification
+    final taskDateTime = _parseTaskDateTime(task);
+    final notificationTime = taskDateTime.subtract(Duration(minutes: timing));
+    final now = DateTime.now();
+
+    if (notificationTime.isAfter(now)) {
+      // Cancel existing timer for this task if exists
+      final taskId = task.id ?? '';
+      if (_scheduledTimers.containsKey(taskId)) {
+        _scheduledTimers[taskId]?.cancel();
+        _scheduledTimers.remove(taskId);
+      }
+
+      // Schedule notification for future
+      final delay = notificationTime.difference(now);
+
+      debugPrint(
+        '[FirebaseNotificationService] Scheduling notification for ${notificationTime.toString()}, delay: ${delay.inMinutes} minutes',
+      );
+
+      // Use Timer to schedule the notification and store it
+      final timer = Timer(delay, () {
+        sendTaskReminder(task, minutesBefore: timing);
+        _scheduledTimers.remove(taskId); // Clean up after execution
+      });
+
+      _scheduledTimers[taskId] = timer;
+
+      _emitEvent(
+        NotificationEventData(
+          event: NotificationEvent.initialized,
+          message:
+              'Task notification scheduled for ${notificationTime.toString()}',
+          data: {
+            'taskId': task.id,
+            'scheduledTime': notificationTime.toString(),
+            'delayMinutes': delay.inMinutes.toString(),
+          },
+        ),
+      );
+
+      return true;
+    } else {
+      // Task time has already passed or is very soon
+      debugPrint(
+        '[FirebaseNotificationService] Task time is in the past or very soon, sending immediate notification',
+      );
+      return await sendTaskReminder(task, minutesBefore: timing);
+    }
+  }
+
+  /// Parse task date and time into DateTime object
+  DateTime _parseTaskDateTime(TaskModel task) {
+    try {
+      // Parse date: "02/07/2025" -> day/month/year
+      final dateParts = task.date.split('/');
+      final day = int.parse(dateParts[0]);
+      final month = int.parse(dateParts[1]);
+      final year = int.parse(dateParts[2]);
+
+      // Parse time: "14:30" or "2:30 PM"
+      final timeParts = task.time.split(':');
+      int hour = int.parse(timeParts[0]);
+      int minute = int.parse(
+        timeParts[1].split(' ')[0],
+      ); // Remove AM/PM if exists
+
+      // Handle AM/PM format
+      if (task.time.toUpperCase().contains('PM') && hour != 12) {
+        hour += 12;
+      } else if (task.time.toUpperCase().contains('AM') && hour == 12) {
+        hour = 0;
+      }
+
+      return DateTime(year, month, day, hour, minute);
+    } catch (e) {
+      debugPrint(
+        '[FirebaseNotificationService] Error parsing task date/time: $e',
+      );
+      return DateTime.now(); // Fallback to current time
+    }
   }
 
   /// Cancel task notification (for compatibility with existing code)
   Future<void> cancelTaskNotification(String taskId) async {
-    // Firebase messaging handles scheduling automatically
-    // This method is kept for compatibility but doesn't need implementation
-    // since FCM handles message delivery timing
-    _emitEvent(
-      NotificationEventData(
-        event: NotificationEvent.initialized,
-        message: 'Task notification cancelled for task: $taskId',
-      ),
-    );
+    // Cancel scheduled timer if exists
+    if (_scheduledTimers.containsKey(taskId)) {
+      _scheduledTimers[taskId]?.cancel();
+      _scheduledTimers.remove(taskId);
+
+      debugPrint(
+        '[FirebaseNotificationService] Cancelled scheduled notification for task: $taskId',
+      );
+
+      _emitEvent(
+        NotificationEventData(
+          event: NotificationEvent.initialized,
+          message: 'Task notification cancelled for task: $taskId',
+          data: {'taskId': taskId},
+        ),
+      );
+    } else {
+      debugPrint(
+        '[FirebaseNotificationService] No scheduled notification found for task: $taskId',
+      );
+    }
   }
 
   /// Set global context for notifications
@@ -557,6 +722,12 @@ class FirebaseNotificationService {
 
   /// Dispose of the service
   void dispose() {
+    // Cancel all scheduled timers
+    for (final timer in _scheduledTimers.values) {
+      timer.cancel();
+    }
+    _scheduledTimers.clear();
+
     _eventController.close();
     debugPrint('[FirebaseNotificationService] Service disposed');
   }

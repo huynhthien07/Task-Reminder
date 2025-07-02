@@ -236,7 +236,9 @@ class _SimpleNotificationSettingsScreenState
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          '• Notifications will be sent $_notificationTimingMinutes minutes before task time\n'
+                          '• Notifications will be sent $_notificationTimingMinutes minutes before each task deadline\n'
+                          '• When you create a task, notification will be automatically scheduled\n'
+                          '• The notification message will show actual time remaining to deadline\n'
                           '• Make sure to allow notification permissions\n'
                           '• Sound depends on your device settings',
                           style: TextStyle(
